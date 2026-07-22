@@ -30,7 +30,7 @@ public class AttendanceServiceImpl implements AttendanceService {
 
     @Override
     public AttendanceResponse markAttendance(AttendanceRequest request, String studentEmail) {
-        User user = userRepository.findByEmail(studentEmail)
+        User user = userRepository.findByEmail(studentEmail.toLowerCase())
                 .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
         Student student = studentRepository.findByUser(user)

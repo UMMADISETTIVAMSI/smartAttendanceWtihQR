@@ -30,7 +30,7 @@ public class QRServiceImpl implements QRService {
         Subject subject = subjectRepository.findById(subjectId)
                 .orElseThrow(() -> new ResourceNotFoundException("Subject not found"));
 
-        Faculty faculty = facultyRepository.findByEmail(facultyEmail)
+        Faculty faculty = facultyRepository.findByEmail(facultyEmail.toLowerCase())
                 .orElseThrow(() -> new ResourceNotFoundException("Faculty not found"));
 
         String sessionId = UUID.randomUUID().toString();

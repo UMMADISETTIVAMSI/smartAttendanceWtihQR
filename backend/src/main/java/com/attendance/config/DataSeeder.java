@@ -27,6 +27,7 @@ public class DataSeeder implements CommandLineRunner {
         if (userRepository.findByEmail("admin@gmail.com").isEmpty()) {
             User admin = User.builder()
                     .name("Admin")
+                    .username("Admin")
                     .email("admin@gmail.com")
                     .password(passwordEncoder.encode("admin123"))
                     .role(User.Role.ADMIN)
@@ -34,12 +35,17 @@ public class DataSeeder implements CommandLineRunner {
                     .build();
             userRepository.save(admin);
             System.out.println("✅ Admin   → admin@gmail.com / admin123");
+        } else {
+            userRepository.findByEmail("admin@gmail.com").ifPresent(u -> {
+                if (!"Admin".equals(u.getUsername())) { u.setUsername("Admin"); userRepository.save(u); }
+            });
         }
 
         // ── FACULTY (stored directly in faculty collection) ─
         if (facultyRepository.findByEmail("faculty@attendance.com").isEmpty()) {
             Faculty faculty = Faculty.builder()
                     .name("Dr. John Smith")
+                    .username("drjohnsmith")
                     .email("faculty@attendance.com")
                     .password(passwordEncoder.encode("faculty@123"))
                     .department("Computer Science")
@@ -49,12 +55,17 @@ public class DataSeeder implements CommandLineRunner {
                     .build();
             facultyRepository.save(faculty);
             System.out.println("✅ Faculty  → faculty@attendance.com / faculty@123");
+        } else {
+            facultyRepository.findByEmail("faculty@attendance.com").ifPresent(f -> {
+                if (!"drjohnsmith".equals(f.getUsername())) { f.setUsername("drjohnsmith"); facultyRepository.save(f); }
+            });
         }
 
         // ── STUDENT (stored in users + students collection) ─
         if (userRepository.findByEmail("student@attendance.com").isEmpty()) {
             User studentUser = User.builder()
                     .name("Alice Johnson")
+                    .username("alicejohnson")
                     .email("student@attendance.com")
                     .password(passwordEncoder.encode("student123"))
                     .role(User.Role.STUDENT)
@@ -71,6 +82,10 @@ public class DataSeeder implements CommandLineRunner {
                     .build();
             studentRepository.save(student);
             System.out.println("✅ Student  → student@attendance.com / student123");
+        } else {
+            userRepository.findByEmail("student@attendance.com").ifPresent(u -> {
+                if (!"alicejohnson".equals(u.getUsername())) { u.setUsername("alicejohnson"); userRepository.save(u); }
+            });
         }
     }
 }

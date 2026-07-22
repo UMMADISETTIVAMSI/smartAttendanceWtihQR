@@ -28,7 +28,7 @@ public class FacultyServiceImpl implements FacultyService {
 
     @Override
     public Faculty getProfile(String email) {
-        return facultyRepository.findByEmail(email)
+        return facultyRepository.findByEmail(email.toLowerCase())
                 .orElseThrow(() -> new ResourceNotFoundException("Faculty not found"));
     }
 

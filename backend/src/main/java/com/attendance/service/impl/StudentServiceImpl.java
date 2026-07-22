@@ -28,7 +28,7 @@ public class StudentServiceImpl implements StudentService {
 
     @Override
     public Student getProfile(String email) {
-        var user = userRepository.findByEmail(email)
+        var user = userRepository.findByEmail(email.toLowerCase())
                 .orElseThrow(() -> new ResourceNotFoundException("User not found"));
         return studentRepository.findByUser(user)
                 .orElseThrow(() -> new ResourceNotFoundException("Student not found"));

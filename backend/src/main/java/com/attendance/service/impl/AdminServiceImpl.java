@@ -89,12 +89,12 @@ public class AdminServiceImpl implements AdminService {
 
     @Override
     public FacultyCreateResponse createFaculty(FacultyCreateRequest request) {
-        if (facultyRepository.existsByEmail(request.getEmail())) {
+        if (facultyRepository.existsByEmail(request.getEmail().toLowerCase())) {
             throw new IllegalArgumentException("Email already registered: " + request.getEmail());
         }
         Faculty faculty = Faculty.builder()
                 .name(request.getName())
-                .email(request.getEmail())
+                .email(request.getEmail().toLowerCase())
                 .password(passwordEncoder.encode(DEFAULT_PASSWORD))
                 .department(request.getDepartment())
                 .designation(request.getDesignation())

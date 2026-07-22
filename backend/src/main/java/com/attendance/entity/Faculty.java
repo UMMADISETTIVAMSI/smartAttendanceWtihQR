@@ -15,6 +15,9 @@ public class Faculty {
 
     private String name;
 
+    @Indexed(unique = true, sparse = true)
+    private String username;
+
     @Indexed(unique = true)
     private String email;
 

@@ -17,6 +17,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.util.Map;
+import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -30,8 +31,14 @@ public class AuthServiceImpl implements AuthService {
 
     @Override
     public Map<String, Object> login(LoginRequest request) {
-        // Check faculty collection first
-        var facultyOpt = facultyRepository.findByEmail(request.getEmail());
+        String identifier = request.getIdentifier().trim();
+        String identifierLower = identifier.toLowerCase();
+
+        // email lookup is case-insensitive (stored lowercase), username is exact case
+        Optional<Faculty> facultyOpt = facultyRepository.findByEmail(identifierLower)
+                .or(() -> facultyRepository.findByUsername(identifier))
+                .or(() -> facultyRepository.findByName(identifier));
+
         if (facultyOpt.isPresent()) {
             Faculty faculty = facultyOpt.get();
             if (!passwordEncoder.matches(request.getPassword(), faculty.getPassword())) {
@@ -47,9 +54,11 @@ public class AuthServiceImpl implements AuthService {
             );
         }
 
-        // Fall back to users collection (ADMIN / STUDENT)
-        User user = userRepository.findByEmail(request.getEmail())
-                .orElseThrow(() -> new ResourceNotFoundException("User not found with email: " + request.getEmail()));
+        // email lookup is case-insensitive (stored lowercase), username is exact case
+        User user = userRepository.findByEmail(identifierLower)
+                .or(() -> userRepository.findByUsername(identifier))
+                .or(() -> userRepository.findByName(identifier))
+                .orElseThrow(() -> new ResourceNotFoundException("User not found: " + identifier));
 
         if (!passwordEncoder.matches(request.getPassword(), user.getPassword())) {
             throw new IllegalArgumentException("Invalid password");
@@ -67,13 +76,13 @@ public class AuthServiceImpl implements AuthService {
 
     @Override
     public Map<String, Object> register(RegisterRequest request) {
-        if (userRepository.existsByEmail(request.getEmail())) {
+        if (userRepository.existsByEmail(request.getEmail().toLowerCase())) {
             throw new IllegalArgumentException("Email already registered");
         }
 
         User user = User.builder()
                 .name(request.getName())
-                .email(request.getEmail())
+                .email(request.getEmail().toLowerCase())
                 .password(passwordEncoder.encode(request.getPassword()))
                 .role(request.getRole())
                 .active(true)
@@ -96,8 +105,11 @@ public class AuthServiceImpl implements AuthService {
 
     @Override
     public Map<String, Object> changePassword(ChangePasswordRequest request) {
-        // Check faculty first
-        var facultyOpt = facultyRepository.findByEmail(request.getEmail());
+        String identifier = request.getEmail().trim();
+
+        Optional<Faculty> facultyOpt = facultyRepository.findByEmail(identifier.toLowerCase())
+                .or(() -> facultyRepository.findByName(identifier));
+
         if (facultyOpt.isPresent()) {
             Faculty faculty = facultyOpt.get();
             if (!passwordEncoder.matches(request.getOldPassword(), faculty.getPassword())) {
@@ -108,9 +120,10 @@ public class AuthServiceImpl implements AuthService {
             return Map.of("message", "Password changed successfully");
         }
 
-        // Fall back to users
-        User user = userRepository.findByEmail(request.getEmail())
+        User user = userRepository.findByEmail(identifier.toLowerCase())
+                .or(() -> userRepository.findByName(identifier))
                 .orElseThrow(() -> new ResourceNotFoundException("User not found"));
+
         if (!passwordEncoder.matches(request.getOldPassword(), user.getPassword())) {
             throw new IllegalArgumentException("Old password is incorrect");
         }
