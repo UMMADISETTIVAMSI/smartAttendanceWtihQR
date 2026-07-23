@@ -14,4 +14,5 @@ public interface StudentRepository extends MongoRepository<Student, String> {
     List<Student> findByDepartment(String department);
     List<Student> findByDepartmentIgnoreCaseAndYearAndSectionIgnoreCase(String department, Integer year, String section);
     List<Student> findByDepartmentAndActive(String department, boolean active);
+    List<Student> findBySection(String section);
 }

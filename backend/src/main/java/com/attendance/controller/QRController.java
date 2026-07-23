@@ -19,13 +19,29 @@ public class QRController {
             @RequestParam String subjectId,
             @RequestParam String section,
             @RequestParam Integer period,
+            @RequestParam(defaultValue = "5") Integer durationMinutes,
             Principal principal) {
-        return ResponseEntity.ok(qrService.generateQR(subjectId, section, period, principal.getName()));
+        return ResponseEntity.ok(qrService.generateQR(subjectId, section, period, durationMinutes, principal.getName()));
     }
 
     @GetMapping("/validate/{token}")
     public ResponseEntity<?> validateToken(@PathVariable String token) {
         qrService.validateToken(token);
         return ResponseEntity.ok().build();
+    }
+
+    @GetMapping("/session/{sessionId}/scanned")
+    public ResponseEntity<?> getScanned(@PathVariable String sessionId) {
+        return ResponseEntity.ok(qrService.getScannedStudents(sessionId));
+    }
+
+    @PostMapping("/session/{sessionId}/confirm")
+    public ResponseEntity<?> confirmAttendance(@PathVariable String sessionId) {
+        return ResponseEntity.ok(qrService.confirmAttendance(sessionId));
+    }
+
+    @PostMapping("/session/{sessionId}/cancel")
+    public ResponseEntity<?> cancelAttendance(@PathVariable String sessionId) {
+        return ResponseEntity.ok(qrService.cancelAttendance(sessionId));
     }
 }

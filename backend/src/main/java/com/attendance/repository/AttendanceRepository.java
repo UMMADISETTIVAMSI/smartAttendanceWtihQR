@@ -32,4 +32,6 @@ public interface AttendanceRepository extends MongoRepository<Attendance, String
     Optional<Attendance> findByStudentAndQrSession(Student student, QRSession qrSession);
 
     List<Attendance> findByDate(LocalDate date);
+
+    List<Attendance> findByQrSession(QRSession qrSession);
 }

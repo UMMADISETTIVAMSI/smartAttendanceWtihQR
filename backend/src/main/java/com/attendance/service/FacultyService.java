@@ -2,6 +2,7 @@ package com.attendance.service;
 
 import com.attendance.dto.AttendanceResponse;
 import com.attendance.entity.Faculty;
+import com.attendance.entity.FacultySection;
 import com.attendance.entity.Student;
 import com.attendance.entity.Subject;
 
@@ -17,4 +18,7 @@ public interface FacultyService {
     List<String> getCoordinatorDepartments();
     List<Student> getStudentsByFilter(String department, Integer year, String section);
     List<Map<String, Object>> getFacultyByDepartment(String department);
+    List<FacultySection> getMySections(String email);
+    FacultySection addSection(String email, Map<String, Object> body);
+    void removeSection(String email, String sectionId);
 }

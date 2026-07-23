@@ -5,15 +5,14 @@ import { ROLES } from '../utils/constants';
 const studentLinks = [
   { to: '/student/dashboard', label: 'Dashboard' },
   { to: '/student/scan-qr', label: 'Scan QR' },
-  { to: '/profile', label: 'Profile' },
 ];
 
 const facultyLinks = [
   { to: '/faculty/dashboard', label: 'Dashboard' },
+  { to: '/faculty/my-section', label: 'My Sections' },
   { to: '/faculty/generate-qr', label: 'Generate QR' },
   { to: '/attendance', label: 'Attendance' },
   { to: '/reports', label: 'Reports' },
-  { to: '/profile', label: 'Profile' },
 ];
 
 const adminLinks = [

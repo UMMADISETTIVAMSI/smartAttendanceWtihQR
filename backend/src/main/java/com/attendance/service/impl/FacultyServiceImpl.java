@@ -1,15 +1,9 @@
 package com.attendance.service.impl;
 
 import com.attendance.dto.AttendanceResponse;
-import com.attendance.entity.Attendance;
-import com.attendance.entity.Faculty;
-import com.attendance.entity.Student;
-import com.attendance.entity.Subject;
+import com.attendance.entity.*;
 import com.attendance.exception.ResourceNotFoundException;
-import com.attendance.repository.AttendanceRepository;
-import com.attendance.repository.FacultyRepository;
-import com.attendance.repository.StudentRepository;
-import com.attendance.repository.SubjectRepository;
+import com.attendance.repository.*;
 import com.attendance.service.FacultyService;
 import lombok.RequiredArgsConstructor;
 import org.apache.poi.ss.usermodel.*;
@@ -29,6 +23,7 @@ public class FacultyServiceImpl implements FacultyService {
     private final SubjectRepository subjectRepository;
     private final AttendanceRepository attendanceRepository;
     private final StudentRepository studentRepository;
+    private final FacultySectionRepository facultySectionRepository;
 
     @Override
     public Faculty getProfile(String email) {
@@ -109,6 +104,48 @@ public class FacultyServiceImpl implements FacultyService {
                         "subjectCode", s.getSubjectCode()
                 ))
                 .toList();
+    }
+
+    @Override
+    public List<FacultySection> getMySections(String email) {
+        Faculty faculty = getProfile(email);
+        return facultySectionRepository.findByFaculty(faculty);
+    }
+
+    @Override
+    public FacultySection addSection(String email, Map<String, Object> body) {
+        Faculty faculty = getProfile(email);
+        String department = (String) body.get("department");
+        Integer year = body.get("year") instanceof Integer ? (Integer) body.get("year") : Integer.parseInt(body.get("year").toString());
+        String section = (String) body.get("section");
+        String subjectName = body.get("subjectName") != null ? (String) body.get("subjectName") : null;
+        String subjectId = body.get("subjectId") != null ? (String) body.get("subjectId") : null;
+        String subjectCode = body.get("subjectCode") != null ? (String) body.get("subjectCode") : null;
+
+        boolean exists = facultySectionRepository
+                .existsByFacultyAndDepartmentAndYearAndSectionAndSubjectName(faculty, department, year, section, subjectName);
+        if (exists) throw new IllegalArgumentException("Section already added");
+
+        FacultySection fs = FacultySection.builder()
+                .faculty(faculty)
+                .department(department)
+                .year(year)
+                .section(section)
+                .subjectName(subjectName)
+                .subjectId(subjectId)
+                .subjectCode(subjectCode)
+                .build();
+        return facultySectionRepository.save(fs);
+    }
+
+    @Override
+    public void removeSection(String email, String sectionId) {
+        Faculty faculty = getProfile(email);
+        FacultySection fs = facultySectionRepository.findById(sectionId)
+                .orElseThrow(() -> new ResourceNotFoundException("Section not found"));
+        if (!fs.getFaculty().getId().equals(faculty.getId()))
+            throw new IllegalArgumentException("Access denied");
+        facultySectionRepository.deleteById(sectionId);
     }
 
     private AttendanceResponse mapToResponse(Attendance a) {

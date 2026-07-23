@@ -5,7 +5,6 @@ import { Users, Search, Filter, PlusCircle } from 'lucide-react';
 import toast from 'react-hot-toast';
 import Loading from '../components/Loading';
 import axiosInstance from '../utils/axiosConfig';
-import { SECTION_KEY } from './MySection';
 
 const YEARS = [1, 2, 3, 4];
 const SECTIONS = ['A', 'B', 'C', 'D', 'E'];
@@ -15,6 +14,7 @@ const FacultyDashboard = () => {
   const [profile, setProfile] = useState(null);
   const [departments, setDepartments] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [sectionCount, setSectionCount] = useState(0);
 
   const [selectedDept, setSelectedDept] = useState('');
   const [selectedYear, setSelectedYear] = useState('');
@@ -29,10 +29,12 @@ const FacultyDashboard = () => {
     Promise.all([
       axiosInstance.get('/faculty/profile'),
       axiosInstance.get('/faculty/departments'),
+      axiosInstance.get('/faculty/my-sections'),
     ])
-      .then(([p, d]) => {
+      .then(([p, d, s]) => {
         setProfile(p.data);
         setDepartments(d.data);
+        setSectionCount(s.data.length);
       })
       .catch(() => toast.error('Failed to load dashboard'))
       .finally(() => setLoading(false));
@@ -57,40 +59,28 @@ const FacultyDashboard = () => {
     }
   };
 
-  const handleAddSection = () => {
-    const newEntry = {
-      department: selectedDept,
-      year: selectedYear,
-      section: selectedSection,
-      subjectId: null,
-      subjectName: selectedSubjectId.trim() || null,
-      subjectCode: null,
-    };
-
-    const saved = localStorage.getItem(SECTION_KEY);
-    const existing = saved ? JSON.parse(saved) : [];
-
-    const isDuplicate = existing.some(e =>
-      e.department === newEntry.department &&
-      e.year === newEntry.year &&
-      e.section === newEntry.section &&
-      e.subjectName === newEntry.subjectName
-    );
-
-    if (isDuplicate) {
-      toast.error('This section + subject is already added');
+  const handleAddSection = async () => {
+    if (!selectedDept || !selectedYear || !selectedSection) {
+      toast.error('Please select department, year and section');
       return;
     }
-
-    const updated = [...existing, newEntry];
-    localStorage.setItem(SECTION_KEY, JSON.stringify(updated));
-    toast.success(`${selectedDept} · Yr${selectedYear} · Sec ${selectedSection} added!`);
-    navigate('/faculty/my-section');
+    try {
+      await axiosInstance.post('/faculty/my-sections', {
+        department: selectedDept,
+        year: parseInt(selectedYear),
+        section: selectedSection,
+        subjectName: selectedSubjectId.trim() || null,
+        subjectId: null,
+        subjectCode: null,
+      });
+      toast.success(`${selectedDept} · Yr${selectedYear} · Sec ${selectedSection} added!`);
+      navigate('/faculty/my-section');
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Section already added or failed');
+    }
   };
 
   if (loading) return <Loading />;
-
-  const savedSections = JSON.parse(localStorage.getItem(SECTION_KEY) || '[]');
 
   return (
     <div className="space-y-6">
@@ -106,7 +96,7 @@ const FacultyDashboard = () => {
         </div>
         <div className="ml-auto flex gap-3">
           <div className="text-center bg-green-500/10 border border-green-500/20 rounded-xl px-4 py-2">
-            <p className="text-2xl font-bold text-green-400">{savedSections.length}</p>
+            <p className="text-2xl font-bold text-green-400">{sectionCount}</p>
             <p className="text-xs text-slate-400">My Sections</p>
           </div>
         </div>

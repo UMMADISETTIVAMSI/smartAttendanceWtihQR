@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.security.Principal;
 import java.time.LocalDate;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/faculty")
@@ -17,6 +18,22 @@ import java.time.LocalDate;
 public class FacultyController {
 
     private final FacultyService facultyService;
+
+    @GetMapping("/my-sections")
+    public ResponseEntity<?> getMySections(Principal principal) {
+        return ResponseEntity.ok(facultyService.getMySections(principal.getName()));
+    }
+
+    @PostMapping("/my-sections")
+    public ResponseEntity<?> addSection(@RequestBody Map<String, Object> body, Principal principal) {
+        return ResponseEntity.ok(facultyService.addSection(principal.getName(), body));
+    }
+
+    @DeleteMapping("/my-sections/{id}")
+    public ResponseEntity<?> removeSection(@PathVariable String id, Principal principal) {
+        facultyService.removeSection(principal.getName(), id);
+        return ResponseEntity.ok(Map.of("message", "Section removed"));
+    }
 
     @GetMapping("/departments")
     public ResponseEntity<?> getDepartments() {
