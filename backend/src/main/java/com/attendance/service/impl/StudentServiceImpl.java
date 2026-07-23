@@ -81,6 +81,21 @@ public class StudentServiceImpl implements StudentService {
         );
     }
 
+    @Override
+    public List<Map<String, Object>> getFacultyForStudent(String email) {
+        Student student = getProfile(email);
+        return subjectRepository.findByDepartment(student.getDepartment()).stream()
+                .filter(s -> s.getFaculty() != null)
+                .map(s -> Map.<String, Object>of(
+                        "facultyName", s.getFaculty().getName(),
+                        "designation", s.getFaculty().getDesignation() != null ? s.getFaculty().getDesignation() : "",
+                        "department", s.getFaculty().getDepartment() != null ? s.getFaculty().getDepartment() : "",
+                        "subjectName", s.getSubjectName(),
+                        "subjectCode", s.getSubjectCode()
+                ))
+                .toList();
+    }
+
     private AttendanceResponse mapToResponse(Attendance a) {
         return AttendanceResponse.builder()
                 .id(a.getId())

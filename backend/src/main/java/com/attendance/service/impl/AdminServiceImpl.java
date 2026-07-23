@@ -1,14 +1,20 @@
 package com.attendance.service.impl;
 
 import com.attendance.dto.AttendanceResponse;
+import com.attendance.dto.CoordinatorCreateRequest;
+import com.attendance.dto.CoordinatorResponse;
 import com.attendance.dto.FacultyCreateRequest;
 import com.attendance.dto.FacultyCreateResponse;
+import com.attendance.dto.StudentResponse;
 import com.attendance.entity.Attendance;
+import com.attendance.entity.Coordinator;
 import com.attendance.entity.Faculty;
 import com.attendance.entity.Student;
 import com.attendance.entity.Subject;
 import com.attendance.entity.User;
+import com.attendance.exception.ResourceNotFoundException;
 import com.attendance.repository.AttendanceRepository;
+import com.attendance.repository.CoordinatorRepository;
 import com.attendance.repository.FacultyRepository;
 import com.attendance.repository.StudentRepository;
 import com.attendance.repository.SubjectRepository;
@@ -33,6 +39,7 @@ public class AdminServiceImpl implements AdminService {
 
     private final StudentRepository studentRepository;
     private final FacultyRepository facultyRepository;
+    private final CoordinatorRepository coordinatorRepository;
     private final SubjectRepository subjectRepository;
     private final AttendanceRepository attendanceRepository;
     private final UserRepository userRepository;
@@ -54,8 +61,8 @@ public class AdminServiceImpl implements AdminService {
     }
 
     @Override
-    public List<Student> getAllStudents() {
-        return studentRepository.findAll();
+    public List<StudentResponse> getAllStudents() {
+        return studentRepository.findAll().stream().map(this::toStudentResponse).toList();
     }
 
     @Override
@@ -85,7 +92,96 @@ public class AdminServiceImpl implements AdminService {
         );
     }
 
+    private static final String DEFAULT_COORDINATOR_PASSWORD = "Coordinator@123";
     private static final String DEFAULT_PASSWORD = "faculty@123";
+
+    @Override
+    public Map<String, Object> createCoordinator(CoordinatorCreateRequest request) {
+        if (coordinatorRepository.existsByEmail(request.getEmail().toLowerCase())) {
+            throw new IllegalArgumentException("Email already registered");
+        }
+        if (coordinatorRepository.existsByUsername(request.getUsername())) {
+            throw new IllegalArgumentException("Username already taken");
+        }
+        Coordinator coordinator = Coordinator.builder()
+                .name(request.getName())
+                .email(request.getEmail().toLowerCase())
+                .username(request.getUsername())
+                .mobile(request.getMobile())
+                .department(request.getDepartment())
+                .password(passwordEncoder.encode(DEFAULT_COORDINATOR_PASSWORD))
+                .active(true)
+                .build();
+        coordinatorRepository.save(coordinator);
+        return Map.of(
+                "message", "Coordinator created successfully",
+                "username", request.getUsername(),
+                "password", DEFAULT_COORDINATOR_PASSWORD,
+                "coordinator", toCoordinatorResponse(coordinator)
+        );
+    }
+
+    @Override
+    public List<CoordinatorResponse> getAllCoordinators() {
+        return coordinatorRepository.findAll().stream().map(this::toCoordinatorResponse).toList();
+    }
+
+    @Override
+    public void deleteCoordinator(String coordinatorId) {
+        coordinatorRepository.findById(coordinatorId)
+                .orElseThrow(() -> new ResourceNotFoundException("Coordinator not found"));
+        coordinatorRepository.deleteById(coordinatorId);
+    }
+
+    @Override
+    public Map<String, Object> resetCoordinatorPassword(String coordinatorId) {
+        Coordinator coordinator = coordinatorRepository.findById(coordinatorId)
+                .orElseThrow(() -> new ResourceNotFoundException("Coordinator not found"));
+        coordinator.setPassword(passwordEncoder.encode(DEFAULT_COORDINATOR_PASSWORD));
+        coordinatorRepository.save(coordinator);
+        return Map.of("message", "Password reset to default", "password", DEFAULT_COORDINATOR_PASSWORD);
+    }
+
+    @Override
+    public Map<String, Object> toggleCoordinatorActive(String coordinatorId) {
+        Coordinator coordinator = coordinatorRepository.findById(coordinatorId)
+                .orElseThrow(() -> new ResourceNotFoundException("Coordinator not found"));
+        coordinator.setActive(!coordinator.isActive());
+        coordinatorRepository.save(coordinator);
+        return Map.of("active", coordinator.isActive());
+    }
+
+    @Override
+    public List<StudentResponse> getStudentsByDepartment(String department) {
+        return studentRepository.findByDepartment(department).stream().map(this::toStudentResponse).toList();
+    }
+
+    @Override
+    public void deleteStudent(String studentId) {
+        Student student = studentRepository.findById(studentId)
+                .orElseThrow(() -> new ResourceNotFoundException("Student not found"));
+        studentRepository.deleteById(studentId);
+        userRepository.deleteById(student.getUser().getId());
+    }
+
+    private CoordinatorResponse toCoordinatorResponse(Coordinator c) {
+        return CoordinatorResponse.builder()
+                .id(c.getId()).name(c.getName()).email(c.getEmail())
+                .mobile(c.getMobile()).department(c.getDepartment())
+                .username(c.getUsername()).active(c.isActive())
+                .build();
+    }
+
+    private StudentResponse toStudentResponse(Student s) {
+        return StudentResponse.builder()
+                .id(s.getId()).userId(s.getUser().getId())
+                .name(s.getUser().getName()).email(s.getUser().getEmail())
+                .username(s.getUser().getUsername()).rollNumber(s.getRollNumber())
+                .department(s.getDepartment()).year(s.getYear())
+                .semester(s.getSemester()).section(s.getSection())
+                .active(s.isActive())
+                .build();
+    }
 
     @Override
     public FacultyCreateResponse createFaculty(FacultyCreateRequest request) {

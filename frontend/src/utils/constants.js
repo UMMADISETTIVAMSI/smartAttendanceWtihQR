@@ -4,6 +4,7 @@ export const ROLES = {
   ADMIN: 'ADMIN',
   FACULTY: 'FACULTY',
   STUDENT: 'STUDENT',
+  COORDINATOR: 'COORDINATOR',
 };
 
 export const ROUTES = {

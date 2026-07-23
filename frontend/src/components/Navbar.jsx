@@ -1,14 +1,16 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { QrCode, Menu, X, ChevronDown, LogOut, User, LayoutDashboard, QrCode as QrIcon, ScanLine, FileBarChart, Users, BookOpen, ClipboardList, UserPlus } from 'lucide-react';
+import { QrCode, Menu, X, ChevronDown, LogOut, User, LayoutDashboard, QrCode as QrIcon, ScanLine, FileBarChart, Users, BookOpen, ClipboardList, UserPlus, Shield, GraduationCap } from 'lucide-react';
 import useAuth from '../hooks/useAuth';
 import { ROLES } from '../utils/constants';
+import { SECTION_KEY } from '../pages/MySection';
 
 const roleNavLinks = {
   [ROLES.ADMIN]: [
     { label: 'Dashboard', path: '/admin/dashboard', icon: LayoutDashboard },
     { label: 'Manage Faculty', path: '/admin/faculty', icon: UserPlus },
+    { label: 'Manage Coordinators', path: '/admin/coordinators', icon: Shield },
     { label: 'Attendance', path: '/attendance', icon: ClipboardList },
     { label: 'Reports', path: '/reports', icon: FileBarChart },
     { label: 'Profile', path: '/profile', icon: User },
@@ -27,12 +29,18 @@ const roleNavLinks = {
     { label: 'Reports', path: '/reports', icon: FileBarChart },
     { label: 'Profile', path: '/profile', icon: User },
   ],
+  [ROLES.COORDINATOR]: [
+    { label: 'Dashboard', path: '/coordinator/dashboard', icon: LayoutDashboard },
+    { label: 'Manage Students', path: '/coordinator/students', icon: Users },
+    { label: 'Profile', path: '/profile', icon: User },
+  ],
 };
 
 const roleBadgeColor = {
   [ROLES.ADMIN]: 'from-red-500 to-orange-500',
   [ROLES.FACULTY]: 'from-purple-500 to-blue-500',
   [ROLES.STUDENT]: 'from-green-500 to-teal-500',
+  [ROLES.COORDINATOR]: 'from-yellow-500 to-orange-500',
 };
 
 const publicNavLinks = [
@@ -46,10 +54,19 @@ const Navbar = () => {
   const [scrolled, setScrolled] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [sectionBadge, setSectionBadge] = useState(null);
   const navigate = useNavigate();
   const location = useLocation();
   const { user, logout, isAuthenticated } = useAuth();
   const dropdownRef = useRef(null);
+
+  useEffect(() => {
+    if (user?.role === ROLES.FACULTY) {
+      const saved = localStorage.getItem(SECTION_KEY);
+      const arr = saved ? JSON.parse(saved) : [];
+      setSectionBadge(arr.length > 0 ? arr.length : null);
+    }
+  }, [location, user]);
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 20);
@@ -80,6 +97,15 @@ const Navbar = () => {
   };
 
   const navLinks = isAuthenticated ? (roleNavLinks[user?.role] || []) : [];
+  const facultyLinks = user?.role === ROLES.FACULTY ? [
+    { label: 'Dashboard', path: '/faculty/dashboard', icon: LayoutDashboard },
+    { label: 'My Sections', path: '/faculty/my-section', icon: GraduationCap, badge: sectionBadge ? `${sectionBadge}` : null },
+    { label: 'Generate QR', path: '/faculty/generate-qr', icon: QrIcon },
+    { label: 'Attendance', path: '/attendance', icon: ClipboardList },
+    { label: 'Reports', path: '/reports', icon: FileBarChart },
+    { label: 'Profile', path: '/profile', icon: User },
+  ] : null;
+  const activeLinks = facultyLinks || navLinks;
   const isActive = (path) => location.pathname === path;
 
   return (
@@ -97,7 +123,7 @@ const Navbar = () => {
         {/* Logo */}
         <div
           className="flex items-center gap-2 cursor-pointer"
-          onClick={() => isAuthenticated ? navigate(navLinks[0]?.path || '/') : scrollTo('hero')}
+          onClick={() => isAuthenticated ? navigate(activeLinks[0]?.path || '/') : scrollTo('hero')}
         >
           <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center shadow-lg">
             <QrCode className="w-5 h-5 text-white" />
@@ -110,7 +136,7 @@ const Navbar = () => {
         {/* Desktop Links */}
         <div className="hidden md:flex items-center gap-1">
           {isAuthenticated ? (
-            navLinks.map((link) => (
+            activeLinks.map((link) => (
               <button
                 key={link.path}
                 onClick={() => navigate(link.path)}
@@ -122,6 +148,11 @@ const Navbar = () => {
               >
                 <link.icon className="w-4 h-4" />
                 {link.label}
+                {link.badge && (
+                  <span className="ml-1 bg-green-500/20 border border-green-500/30 text-green-300 text-[10px] font-bold px-1.5 py-0.5 rounded-full">
+                    {link.badge}
+                  </span>
+                )}
               </button>
             ))
           ) : (
@@ -230,7 +261,7 @@ const Navbar = () => {
                       <div className="text-slate-400 text-xs">{user?.role}</div>
                     </div>
                   </div>
-                  {navLinks.map((link) => (
+                  {activeLinks.map((link) => (
                     <button
                       key={link.path}
                       onClick={() => { navigate(link.path); setMenuOpen(false); }}
@@ -240,6 +271,11 @@ const Navbar = () => {
                     >
                       <link.icon className="w-4 h-4" />
                       {link.label}
+                      {link.badge && (
+                        <span className="ml-1 bg-green-500/20 border border-green-500/30 text-green-300 text-[10px] font-bold px-1.5 py-0.5 rounded-full">
+                          {link.badge}
+                        </span>
+                      )}
                     </button>
                   ))}
                   <button

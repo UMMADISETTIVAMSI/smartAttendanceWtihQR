@@ -3,10 +3,12 @@ package com.attendance.service.impl;
 import com.attendance.dto.AttendanceResponse;
 import com.attendance.entity.Attendance;
 import com.attendance.entity.Faculty;
+import com.attendance.entity.Student;
 import com.attendance.entity.Subject;
 import com.attendance.exception.ResourceNotFoundException;
 import com.attendance.repository.AttendanceRepository;
 import com.attendance.repository.FacultyRepository;
+import com.attendance.repository.StudentRepository;
 import com.attendance.repository.SubjectRepository;
 import com.attendance.service.FacultyService;
 import lombok.RequiredArgsConstructor;
@@ -17,6 +19,7 @@ import org.springframework.stereotype.Service;
 import java.io.ByteArrayOutputStream;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
@@ -25,6 +28,7 @@ public class FacultyServiceImpl implements FacultyService {
     private final FacultyRepository facultyRepository;
     private final SubjectRepository subjectRepository;
     private final AttendanceRepository attendanceRepository;
+    private final StudentRepository studentRepository;
 
     @Override
     public Faculty getProfile(String email) {
@@ -76,6 +80,35 @@ public class FacultyServiceImpl implements FacultyService {
         } catch (Exception e) {
             throw new RuntimeException("Failed to generate Excel file");
         }
+    }
+
+    @Override
+    public List<String> getCoordinatorDepartments() {
+        return studentRepository.findAll().stream()
+                .map(Student::getDepartment)
+                .filter(d -> d != null && !d.isBlank())
+                .distinct()
+                .sorted()
+                .toList();
+    }
+
+    @Override
+    public List<Student> getStudentsByFilter(String department, Integer year, String section) {
+        return studentRepository.findByDepartmentIgnoreCaseAndYearAndSectionIgnoreCase(department, year, section);
+    }
+
+    @Override
+    public List<Map<String, Object>> getFacultyByDepartment(String department) {
+        return subjectRepository.findByDepartment(department).stream()
+                .filter(s -> s.getFaculty() != null)
+                .map(s -> Map.<String, Object>of(
+                        "facultyId", s.getFaculty().getId(),
+                        "facultyName", s.getFaculty().getName(),
+                        "designation", s.getFaculty().getDesignation() != null ? s.getFaculty().getDesignation() : "",
+                        "subjectName", s.getSubjectName(),
+                        "subjectCode", s.getSubjectCode()
+                ))
+                .toList();
     }
 
     private AttendanceResponse mapToResponse(Attendance a) {

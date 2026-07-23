@@ -26,6 +26,10 @@ public class User {
 
     private Role role;
 
+    private String department;
+
+    private String mobile;
+
     @Builder.Default
     private boolean active = true;
 

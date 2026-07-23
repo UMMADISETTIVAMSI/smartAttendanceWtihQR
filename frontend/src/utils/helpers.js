@@ -20,6 +20,7 @@ export const getRoleRedirect = (role) => {
     case ROLES.ADMIN: return ROUTES.ADMIN_DASHBOARD;
     case ROLES.FACULTY: return ROUTES.FACULTY_DASHBOARD;
     case ROLES.STUDENT: return ROUTES.STUDENT_DASHBOARD;
+    case ROLES.COORDINATOR: return '/coordinator/dashboard';
     default: return ROUTES.LOGIN;
   }
 };

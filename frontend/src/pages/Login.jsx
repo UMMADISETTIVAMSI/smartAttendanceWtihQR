@@ -173,7 +173,7 @@ const Login = () => {
     setLoading(true);
     try {
       const { data } = await loginApi({ identifier: form.identifier, password: form.password });
-      login({ name: data.name, email: data.email, role: data.role, id: data.id }, data.token);
+      login({ name: data.name, email: data.email, role: data.role, id: data.id, department: data.department }, data.token);
       toast.success(`Welcome back, ${data.name}!`);
       navigate(getRoleRedirect(data.role));
     } catch (err) {

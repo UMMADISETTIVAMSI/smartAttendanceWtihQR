@@ -20,6 +20,11 @@ public class StudentController {
         return ResponseEntity.ok(studentService.getProfile(principal.getName()));
     }
 
+    @GetMapping("/faculty")
+    public ResponseEntity<?> getFaculty(Principal principal) {
+        return ResponseEntity.ok(studentService.getFacultyForStudent(principal.getName()));
+    }
+
     @GetMapping("/attendance/history")
     public ResponseEntity<?> getHistory(Principal principal) {
         return ResponseEntity.ok(studentService.getAttendanceHistory(principal.getName()));

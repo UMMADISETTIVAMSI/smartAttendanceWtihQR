@@ -11,6 +11,10 @@ import StudentDashboard from '../pages/StudentDashboard';
 import FacultyDashboard from '../pages/FacultyDashboard';
 import AdminDashboard from '../pages/AdminDashboard';
 import ManageFaculty from '../pages/ManageFaculty';
+import ManageCoordinators from '../pages/ManageCoordinators';
+import CoordinatorDashboard from '../pages/CoordinatorDashboard';
+import ManageStudents from '../pages/ManageStudents';
+import MySection from '../pages/MySection';
 import GenerateQRPage from '../pages/GenerateQRPage';
 import ScanQRPage from '../pages/ScanQRPage';
 import AttendancePage from '../pages/AttendancePage';
@@ -34,11 +38,18 @@ const AppRoutes = () => (
     <Route element={<ProtectedRoute allowedRoles={[ROLES.FACULTY]}><DashboardLayout /></ProtectedRoute>}>
       <Route path="/faculty/dashboard" element={<FacultyDashboard />} />
       <Route path="/faculty/generate-qr" element={<GenerateQRPage />} />
+      <Route path="/faculty/my-section" element={<MySection />} />
     </Route>
 
     <Route element={<ProtectedRoute allowedRoles={[ROLES.ADMIN]}><DashboardLayout /></ProtectedRoute>}>
       <Route path="/admin/dashboard" element={<AdminDashboard />} />
       <Route path="/admin/faculty" element={<ManageFaculty />} />
+      <Route path="/admin/coordinators" element={<ManageCoordinators />} />
+    </Route>
+
+    <Route element={<ProtectedRoute allowedRoles={[ROLES.COORDINATOR]}><DashboardLayout /></ProtectedRoute>}>
+      <Route path="/coordinator/dashboard" element={<CoordinatorDashboard />} />
+      <Route path="/coordinator/students" element={<ManageStudents />} />
     </Route>
 
     <Route element={<ProtectedRoute allowedRoles={[ROLES.ADMIN, ROLES.FACULTY, ROLES.STUDENT]}><DashboardLayout /></ProtectedRoute>}>

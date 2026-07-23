@@ -18,6 +18,24 @@ public class FacultyController {
 
     private final FacultyService facultyService;
 
+    @GetMapping("/departments")
+    public ResponseEntity<?> getDepartments() {
+        return ResponseEntity.ok(facultyService.getCoordinatorDepartments());
+    }
+
+    @GetMapping("/students")
+    public ResponseEntity<?> getStudents(
+            @RequestParam String department,
+            @RequestParam Integer year,
+            @RequestParam String section) {
+        return ResponseEntity.ok(facultyService.getStudentsByFilter(department, year, section));
+    }
+
+    @GetMapping("/by-department")
+    public ResponseEntity<?> getFacultyByDept(@RequestParam String department) {
+        return ResponseEntity.ok(facultyService.getFacultyByDepartment(department));
+    }
+
     @GetMapping("/profile")
     public ResponseEntity<?> getProfile(Principal principal) {
         return ResponseEntity.ok(facultyService.getProfile(principal.getName()));

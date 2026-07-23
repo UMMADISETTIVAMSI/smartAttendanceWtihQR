@@ -18,8 +18,15 @@ const facultyLinks = [
 
 const adminLinks = [
   { to: '/admin/dashboard', label: 'Dashboard' },
+  { to: '/admin/faculty', label: 'Manage Faculty' },
+  { to: '/admin/coordinators', label: 'Manage Coordinators' },
   { to: '/attendance', label: 'Attendance' },
   { to: '/reports', label: 'Reports' },
+];
+
+const coordinatorLinks = [
+  { to: '/coordinator/dashboard', label: 'Dashboard' },
+  { to: '/coordinator/students', label: 'Manage Students' },
 ];
 
 const Sidebar = () => {
@@ -28,6 +35,7 @@ const Sidebar = () => {
   const links =
     user?.role === ROLES.STUDENT ? studentLinks :
     user?.role === ROLES.FACULTY ? facultyLinks :
+    user?.role === ROLES.COORDINATOR ? coordinatorLinks :
     adminLinks;
 
   return (

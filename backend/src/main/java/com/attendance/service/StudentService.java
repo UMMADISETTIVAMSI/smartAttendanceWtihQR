@@ -11,4 +11,5 @@ public interface StudentService {
     List<AttendanceResponse> getAttendanceHistory(String email);
     List<Map<String, Object>> getSubjectWiseAttendance(String email);
     Map<String, Object> getAttendanceSummary(String email);
+    List<Map<String, Object>> getFacultyForStudent(String email);
 }

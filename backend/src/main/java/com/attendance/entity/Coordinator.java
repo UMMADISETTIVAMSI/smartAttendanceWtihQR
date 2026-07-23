@@ -1,33 +1,35 @@
 package com.attendance.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import lombok.*;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.index.Indexed;
-import org.springframework.data.mongodb.core.mapping.DBRef;
 import org.springframework.data.mongodb.core.mapping.Document;
 
-@Document(collection = "students")
+@Document(collection = "coordinators")
 @Getter @Setter @NoArgsConstructor @AllArgsConstructor @Builder
-public class Student {
+public class Coordinator {
 
     @Id
     private String id;
 
-    @DBRef
-    private User user;
-
     private String name;
 
+    @Indexed(unique = true, sparse = true)
+    private String username;
+
     @Indexed(unique = true)
-    private String rollNumber;
+    private String email;
+
+    @JsonIgnore
+    private String password;
 
     private String department;
 
-    private Integer semester;
+    private String mobile;
 
-    private Integer year;
-
-    private String section;
+    @Builder.Default
+    private String role = "COORDINATOR";
 
     @Builder.Default
     private boolean active = true;

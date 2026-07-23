@@ -4,10 +4,12 @@ import com.attendance.config.JwtUtil;
 import com.attendance.dto.ChangePasswordRequest;
 import com.attendance.dto.LoginRequest;
 import com.attendance.dto.RegisterRequest;
+import com.attendance.entity.Coordinator;
 import com.attendance.entity.Faculty;
 import com.attendance.entity.Student;
 import com.attendance.entity.User;
 import com.attendance.exception.ResourceNotFoundException;
+import com.attendance.repository.CoordinatorRepository;
 import com.attendance.repository.FacultyRepository;
 import com.attendance.repository.StudentRepository;
 import com.attendance.repository.UserRepository;
@@ -26,6 +28,7 @@ public class AuthServiceImpl implements AuthService {
     private final UserRepository userRepository;
     private final StudentRepository studentRepository;
     private final FacultyRepository facultyRepository;
+    private final CoordinatorRepository coordinatorRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtUtil jwtUtil;
 
@@ -34,10 +37,9 @@ public class AuthServiceImpl implements AuthService {
         String identifier = request.getIdentifier().trim();
         String identifierLower = identifier.toLowerCase();
 
-        // email lookup is case-insensitive (stored lowercase), username is exact case
-        Optional<Faculty> facultyOpt = facultyRepository.findByEmail(identifierLower)
-                .or(() -> facultyRepository.findByUsername(identifier))
-                .or(() -> facultyRepository.findByName(identifier));
+        // email (case-insensitive, stored lowercase) OR username (exact case)
+        Optional<Faculty> facultyOpt = facultyRepository.findFirstByEmail(identifierLower)
+                .or(() -> facultyRepository.findFirstByUsername(identifier));
 
         if (facultyOpt.isPresent()) {
             Faculty faculty = facultyOpt.get();
@@ -54,10 +56,29 @@ public class AuthServiceImpl implements AuthService {
             );
         }
 
-        // email lookup is case-insensitive (stored lowercase), username is exact case
-        User user = userRepository.findByEmail(identifierLower)
-                .or(() -> userRepository.findByUsername(identifier))
-                .or(() -> userRepository.findByName(identifier))
+        // Check coordinator collection
+        Optional<Coordinator> coordinatorOpt = coordinatorRepository.findFirstByEmail(identifierLower)
+                .or(() -> coordinatorRepository.findFirstByUsername(identifier));
+
+        if (coordinatorOpt.isPresent()) {
+            Coordinator coordinator = coordinatorOpt.get();
+            if (!passwordEncoder.matches(request.getPassword(), coordinator.getPassword())) {
+                throw new IllegalArgumentException("Invalid password");
+            }
+            String token = jwtUtil.generateToken(coordinator.getEmail(), "COORDINATOR");
+            return Map.of(
+                    "token", token,
+                    "role", "COORDINATOR",
+                    "name", coordinator.getName(),
+                    "email", coordinator.getEmail(),
+                    "id", coordinator.getId(),
+                    "department", coordinator.getDepartment() != null ? coordinator.getDepartment() : ""
+            );
+        }
+
+        // email (case-insensitive, stored lowercase) OR username (exact case)
+        User user = userRepository.findFirstByEmail(identifierLower)
+                .or(() -> userRepository.findFirstByUsername(identifier))
                 .orElseThrow(() -> new ResourceNotFoundException("User not found: " + identifier));
 
         if (!passwordEncoder.matches(request.getPassword(), user.getPassword())) {
@@ -70,7 +91,8 @@ public class AuthServiceImpl implements AuthService {
                 "role", user.getRole(),
                 "name", user.getName(),
                 "email", user.getEmail(),
-                "id", user.getId()
+                "id", user.getId(),
+                "department", user.getDepartment() != null ? user.getDepartment() : ""
         );
     }
 
@@ -106,9 +128,10 @@ public class AuthServiceImpl implements AuthService {
     @Override
     public Map<String, Object> changePassword(ChangePasswordRequest request) {
         String identifier = request.getEmail().trim();
+        String identifierLower = identifier.toLowerCase();
 
-        Optional<Faculty> facultyOpt = facultyRepository.findByEmail(identifier.toLowerCase())
-                .or(() -> facultyRepository.findByName(identifier));
+        Optional<Faculty> facultyOpt = facultyRepository.findFirstByEmail(identifierLower)
+                .or(() -> facultyRepository.findFirstByUsername(identifier));
 
         if (facultyOpt.isPresent()) {
             Faculty faculty = facultyOpt.get();
@@ -120,8 +143,8 @@ public class AuthServiceImpl implements AuthService {
             return Map.of("message", "Password changed successfully");
         }
 
-        User user = userRepository.findByEmail(identifier.toLowerCase())
-                .or(() -> userRepository.findByName(identifier))
+        User user = userRepository.findFirstByEmail(identifierLower)
+                .or(() -> userRepository.findFirstByUsername(identifier))
                 .orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
         if (!passwordEncoder.matches(request.getOldPassword(), user.getPassword())) {

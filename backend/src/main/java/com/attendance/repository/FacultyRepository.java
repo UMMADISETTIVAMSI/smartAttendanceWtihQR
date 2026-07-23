@@ -7,7 +7,8 @@ import java.util.Optional;
 
 public interface FacultyRepository extends MongoRepository<Faculty, String> {
     Optional<Faculty> findByEmail(String email);
-    Optional<Faculty> findByUsername(String username);
+    Optional<Faculty> findFirstByEmail(String email);
+    Optional<Faculty> findFirstByUsername(String username);
     Optional<Faculty> findByName(String name);
     boolean existsByEmail(String email);
 }
